@@ -44,6 +44,20 @@ void showList(Node* head, Node* cursor) {
     printf("\n\nCursor index: %d\n", cursor->index);
 }
 
+void printList(Node* head) {
+    if (head == NULL) return;
+    Node* current = head;
+    while (current != NULL){
+        if (current->prev != NULL && isSpecial(current->data[0]) == false) {
+            printf(" "
+            );
+        }
+        printf("%s", current->data);
+
+        current = current->next;
+    }
+}
+
 char* stripWord(char* input) {
     if (input[3] != '\0') removeNL(input);
     
@@ -213,14 +227,14 @@ void stepCursor(Node** cursor, int steps) {
 void freeList(Node* head){
   Node* current = head;
   while( current != NULL ) {
-     Node* next = current->Next;
+     Node* next = current->next;
      free( current );
      current = next;
   }
 }
 
+
 int main() {
-    system("clear");
     char fileName[2];
     scanf("%s", fileName);
     strcat(fileName, ".ext");
@@ -242,7 +256,6 @@ int main() {
         pushAfter(cursor, &head, token);
         cursor = head;
         showList(head, cursor);
-        printf("[%s]", token);
         token = strtok(NULL, " ");
 
       }
@@ -252,11 +265,9 @@ int main() {
     getchar();
     moveCursor(&cursor, 'b');
     delete(&cursor, &head);
-
+    fclose(fp);
     while(input[0] != 's') {
-        system("clear");
         if (head != NULL && head->next == NULL && head->prev == NULL) cursor = head;
-        showList(head, cursor);
         fgets(input, 64, stdin);
 
         command = input[0];
@@ -287,6 +298,7 @@ int main() {
                 break;
         }
     }
+    printList(head);
     freeList(head);
     freeList(cursor);
     return 0;
