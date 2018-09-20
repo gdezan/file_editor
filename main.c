@@ -34,9 +34,9 @@ void showList(Node* head, Node* cursor) {
             );
         }
         if (current->index == cursor->index) {
-            printf("[%s]", current->data);
+            printf("/%s/", current->data);
         } else {
-            printf("%s", current->data);
+            printf("/%s/", current->data);
         }
 
         current = current->next;
@@ -167,9 +167,9 @@ void delete(Node** cursor, Node** head) {
     Node* current = *cursor;
     Node* prev = current->prev;
     Node* next = current->next;
-    
+
     free(current);
-    current = *cursor;    
+    current = *cursor;
     if (prev == NULL) {
         next->prev = prev;
         *head = next;
@@ -205,58 +205,58 @@ void stepCursor(Node** cursor, int steps) {
             }
         }
     }
-    
+
 
     *cursor = current;
 }
 
+void freeList(Node* head){
+  Node* current = head;
+  while( current != NULL ) {
+     Node* next = current->Next;
+     free( current );
+     current = next;
+  }
+}
+
 int main() {
-    system("cls");
+    system("clear");
     char fileName[2];
     scanf("%s", fileName);
     strcat(fileName, ".ext");
     char* input = (char *) malloc(64 * sizeof(char));
     char command;
 
-    Node* head = NULL;
-    Node* cursor = NULL;
-
+    Node* head = (Node*)malloc(sizeof(Node));
+    Node* cursor = head;
     FILE* fp;
     fp = fopen(fileName, "r");
 
     char buff[255];
-    char word[63];
-    int i;
-    while(fgets(buff, 255, fp)){
-        i = 0;
-        while (isSpecial(buff[i]) == false && buff[i] != ' ' && buff[i] != '\0'){
-            word[i] = buff[i];
-            i++;
-        }
-        if (word[0] != '\0') {
-            word[i] = '\0';
-        } else if (isSpecial(buff[i])) {
-            word[0] = buff[i];
-            word[1] = '\0';
-        }
-        printf("\n%s", word);
-        cursor = head;
-        printf("\n%s", word);
-        //moveCursor(&cursor, 'e');
-        printf("\n%s", word);
-        pushAfter(cursor, &head, word);
-        printf("\n%s", word);
-        word[0] = '\0';
-        system("pause");
-	}
-    fclose(fp);
+    char* token = calloc(63,sizeof(char));
 
+    while(fgets(buff, 255, fp)){
+      token = strtok(buff, " ");
+      while(token != NULL){
+        moveCursor(&cursor, 'e');
+        pushAfter(cursor, &head, token);
+        cursor = head;
+        showList(head, cursor);
+        printf("[%s]", token);
+        token = strtok(NULL, " ");
+
+      }
+      getchar();
+    }
+    printf("\n");
+    getchar();
+    moveCursor(&cursor, 'b');
+    delete(&cursor, &head);
 
     while(input[0] != 's') {
-        system("cls");
+        system("clear");
         if (head != NULL && head->next == NULL && head->prev == NULL) cursor = head;
         showList(head, cursor);
-        
         fgets(input, 64, stdin);
 
         command = input[0];
@@ -285,8 +285,9 @@ int main() {
             case 'g':
                 stepCursor(&cursor, atoi(stripWord(input)));
                 break;
-        }  
+        }
     }
+    freeList(head);
+    freeList(cursor);
     return 0;
-    
 }
