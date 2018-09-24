@@ -1,2 +1,2 @@
-# file_editor
-College assignment to create a text editor with double linked lists
+# File Editor
+College assignment to create a simple text editor with doubly linked lists
