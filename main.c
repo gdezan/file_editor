@@ -3,6 +3,23 @@
 #include <string.h>
 #include <stdbool.h>
 
+// Função para conferir se um caractere é especial ou não
+bool isSpecial(char x) {
+    bool answer = true;
+    if ((x >= 65 && x <= 90) || (x >= 87 && x <= 122) || (x >= 48 && x <= 57) || x == '\0') {
+        answer = false;
+    }
+    return answer;
+}
+
+// Definição do nó
+typedef struct node { 
+    char* data; // Palavra que ficará no nó
+    int index;  // Índice do nó
+    struct node* next;
+    struct node* prev; 
+} Node;
+
 void removeNL(char *input){                             // Função para remover o \n do fgets
     size_t len = strlen(input);
     if (len > 0 && input[len-1] == '\n') {
@@ -10,47 +27,14 @@ void removeNL(char *input){                             // Função para remover
     }
 }
 
-bool isSpecial(char x) {
-    bool answer = true;
-    if ((x >= 65 && x <= 90) || (x >= 87 && x <= 122) || (x >= 48 && x <= 57)) {
-        answer = false;
-    }
-    return answer;
-}
-
-typedef struct node { 
-    char* data;
-    int index; 
-    struct node* next; // Pointer to next node in DLL 
-    struct node* prev; // Pointer to previous node in DLL 
-} Node;
-
-void showList(Node* head, Node* cursor) {
-    if (head == NULL) return;
-    Node* current = head;
-    while (current != NULL){
-        if (current->prev != NULL && isSpecial(current->data[0]) == false) {
-            printf(" "
-            );
-        }
-        if (current->index == cursor->index) {
-            printf("/%s/", current->data);
-        } else {
-            printf("/%s/", current->data);
-        }
-
-        current = current->next;
-    }
-    printf("\n\nCursor index: %d\n", cursor->index);
-}
-
+// Função para imprimir a lista
 void printList(Node* head) {
     if (head == NULL) return;
     Node* current = head;
     while (current != NULL){
-        if (current->prev != NULL && isSpecial(current->data[0]) == false) {
-            printf(" "
-            );
+        // Confere se a palavra atual é especial ou não para gerar o espaço antes dela
+        if (current->prev != NULL && isSpecial(current->data[0]) == false && strcmp(current->prev->data, "\n") != 0){
+            printf(" ");
         }
         printf("%s", current->data);
 
@@ -58,6 +42,9 @@ void printList(Node* head) {
     }
 }
 
+
+// Função para pegar o a palavra apos o comando
+// Exemplo: O usuario vai entrar com "i foobar" e a função retorna "foobar"
 char* stripWord(char* input) {
     if (input[3] != '\0') removeNL(input);
     
@@ -68,13 +55,14 @@ char* stripWord(char* input) {
     return word;
 }
 
+
+// Função para inserir a palavra após o cursor
 void pushAfter(Node* cursor, Node** head, char* value) {
     Node* new = (Node*) malloc(sizeof(Node));
-
-    new->data = (char *) malloc(strlen(value) * sizeof(char)); 
-    new->data = value;
+    new->data = (char *) malloc((strlen(value)+1) * sizeof(char)); 
+    strcpy(new->data,value);
     
-    if (*head == NULL) { 
+    if (*head == NULL) { // Confere caso a lista não tenha nenhum nó ainda
         new->prev = NULL;
         new->next = NULL; 
         new->index = 0;
@@ -82,7 +70,7 @@ void pushAfter(Node* cursor, Node** head, char* value) {
         return; 
     } 
 
-    Node* current = cursor;
+    Node* current = cursor;  // Pega a posição do cursor para fazer a inserção
     Node* next = current->next;
     current->next = new;
     new->index = current->index; 
@@ -92,17 +80,18 @@ void pushAfter(Node* cursor, Node** head, char* value) {
     if (next != NULL) next->prev = new;
     current = current->next;
 
-    while(current != NULL){
+    while(current != NULL){ // Renumerando os índices dos nós posteriores ao cursor
         current->index++;
         current = current->next;
     }
 }
 
+// Função para adicionar a palavra antes do cursor. Similar a função 'pushAfter'
 void pushBefore(Node* cursor, Node** head, char* value) {
     Node* new = (Node*) malloc(sizeof(Node));
 
-    new->data = (char *) malloc(strlen(value) * sizeof(char)); 
-    new->data = value;
+    new->data = (char *) malloc((strlen(value)+1) * sizeof(char)); 
+    strcpy(new->data,value);
     
     if (*head == NULL) { 
         new->prev = NULL;
@@ -131,6 +120,7 @@ void pushBefore(Node* cursor, Node** head, char* value) {
     }
 }
 
+// Função para substituir uma palavra
 void replace(Node* cursor, char* value) {
     Node* current = cursor;
     if (current == NULL){
@@ -138,10 +128,11 @@ void replace(Node* cursor, char* value) {
     }
 
     free(current->data);
-    current->data = (char *) malloc(strlen(value) * sizeof(char)); 
-    current->data = value;
+    current->data = (char *) malloc((strlen(value)+1) * sizeof(char)); 
+    strcpy(current->data,value);
 }
 
+// Função para encontrar uma palavra e retornar seu índice
 void find(Node* cursor, char* value) {
     Node* current = cursor;
     if (current == NULL) {
@@ -153,9 +144,11 @@ void find(Node* cursor, char* value) {
         current = current->next;
     }
 
-    if (strcmp(current->data, value) == 0) printf("\nINDEX: %d\n", current->index);
+    if (strcmp(current->data, value) == 0) printf("%d\n", current->index);
 }
 
+
+// Função com métodos para a movimentação do cursor
 void moveCursor(Node** cursor, char dir) {
     switch(dir){
         case 'n':
@@ -173,36 +166,40 @@ void moveCursor(Node** cursor, char dir) {
     }
 }
 
+// Função para a remoção de uma palavra
 void delete(Node** cursor, Node** head) {
     if (*head == NULL) { 
         return; 
     } 
 
-    Node* current = *cursor;
-    Node* prev = current->prev;
-    Node* next = current->next;
+    Node* current = *cursor;        // Pega o nó anterior e o posterior
+    Node* prev = current->prev;     // do cursor para depois uní-los
+    Node* next = current->next;     // após a remoção da palavra
 
     free(current);
     current = *cursor;
-    if (prev == NULL) {
+    if (prev == NULL) {             // Caso seja a primeira palavra
         next->prev = prev;
         *head = next;
         *cursor = next;
-    } else if (next == NULL) {
+    } else if (next == NULL) {      // Caso seja a última
         prev->next = next;
+        *cursor = prev;
     } else {
         next->prev = prev;
         prev->next = next;
-        *cursor = prev;
+        *cursor = next;
     }
 
     current = current->next;
-    while(current != NULL){
+    while(current != NULL){         // Renumera os índices após a remoção
         current->index--;
         current = current->next;
     }
 }
 
+
+// Função para movimentar o cursor um certo número de passos
 void stepCursor(Node** cursor, int steps) {
     Node* current = *cursor;
 
@@ -224,6 +221,7 @@ void stepCursor(Node** cursor, int steps) {
     *cursor = current;
 }
 
+// Liberação da memória da lista
 void freeList(Node* head){
   Node* current = head;
   while( current != NULL ) {
@@ -235,36 +233,99 @@ void freeList(Node* head){
 
 
 int main() {
-    char fileName[2];
-    scanf("%s", fileName);
+    char fileName[2];               // Pegando o nome do arquivo para
+    scanf("%s", fileName);          // lê-lo em seguida
     strcat(fileName, ".ext");
     char* input = (char *) malloc(64 * sizeof(char));
     char command;
 
-    Node* head = (Node*)malloc(sizeof(Node));
-    Node* cursor = head;
+    Node* head = NULL;              // Declaração do nó cabeça da lista
+    Node* cursor = head;            // Declaração do cursor;
     FILE* fp;
     fp = fopen(fileName, "r");
 
+    // String que irá conter o resultado do fgets (i.e.: linha do arquivo)
     char buff[255];
+
+    // String que irá conter cada palavra da linha por vez (com ajuda da função strtok)                   
     char* token = calloc(63,sizeof(char));
 
-    while(fgets(buff, 255, fp)){
-      token = strtok(buff, " ");
-      while(token != NULL){
-        moveCursor(&cursor, 'e');
-        pushAfter(cursor, &head, token);
-        cursor = head;
-        showList(head, cursor);
-        token = strtok(NULL, " ");
+    // Onde ficarão os caracteres especiais antes de serem inseridos na lista    
+    char special[2];
 
-      }
-      getchar();
+    // Onde ficarão as palavras antes dos caracteres especiais
+    char before[31];
+
+    // Onde ficarão as palavras depois dos caracteres especiais
+    char after[31];
+
+    int i;
+
+    while (fgets(buff, 255, fp)) {  // Lê linhas enquanto ainda existem no arquivo
+        token = strtok(buff, " ");      // Função nativa utilizada para separar a linha palavra por palavra
+        while(token != NULL){
+
+            strcpy(after, token);
+
+            // O princípio do loop abaixo é pegar uma palavra e separar em duas partes
+            // A anterior (before), que são todos os caracteres antes de um caractere especial.
+            // E a posterior (after), que são todos os caracters após o fim da anterior
+            // Exemplo: Palavra: "foo.bar" -> before: "foo" - after: "bar"
+            // A 'before' é, então, enviada para a lista, e o loop ocorre denovo, fazendo o mesmo
+            // processo anterior com 'after', separando-a em uma nova 'before' e 'after'.
+            // Esse processo se repete até a 'after' não existir mais.
+            while (strcmp(after, "") != 0) {    
+                i = 0;
+
+                while (i <= strlen(after)) {
+                    if (isSpecial(after[i])) break; // Caso encontre um caractere especial, quebra o processo de cópia
+                    before[i] = after[i];     // Cópia do começo da palavra para a 'before'
+                    i++;
+                }
+
+                if (i == 0) {               // Esse caso ocorre quando o primeiro caractere da 'after' já é um
+                    before[i] = after[i];   // caractere especial. Ele então é enviada como um nó para a lista
+                    i++;
+                }
+
+                before[i] = '\0';   // Fechamento da string 'before'
+
+
+                // OBS: A implementação:
+                //
+                // moveCursor(&cursor, 'e');
+                // pushAfter(cursor, &head, after); 
+                //
+                // É uma forma de inserir valor no final da lista sem ser necessário criar um função específica para isso.
+                // Ela consiste em mover o cursor para o final, e inserir uma palavra após o cursor
+
+                    
+                if (strcmp(before, after) == 0) {       // Caso before e after(antes da cisão) sejam iguais
+                    pushAfter(cursor, &head, after);    // a palavra inteira pode ser enviada e o loop
+                    cursor = head;                      // é encerrado
+                    moveCursor(&cursor, 'e');
+                    break;
+                } else {
+                    pushAfter(cursor, &head, before);   // Caso contrário, a 'before' é enviada como um nó
+                    cursor = head;
+                    moveCursor(&cursor, 'e');
+
+                    special[0] = after[i];              // O caractere especial 'divisor' é enviado como um nó
+                    special[1] = '\0';
+                    pushAfter(cursor, &head, special);
+                    moveCursor(&cursor, 'e');
+                    i++;
+                    
+                    for (int j = i; j <= strlen(after); j++){   // E há a criação da 'after' nova, que são os 
+                        after[j-i] = after[j];                  // os caracteres após o caractere 'divisor'
+                    }
+                }
+
+            }
+            token = strtok(NULL, " ");  // Pega a palavra seguinte
+        }
     }
-    printf("\n");
-    getchar();
-    moveCursor(&cursor, 'b');
-    delete(&cursor, &head);
+    moveCursor(&cursor, 'b');   // Coloca o cursor no início
     fclose(fp);
     while(input[0] != 's') {
         if (head != NULL && head->next == NULL && head->prev == NULL) cursor = head;
@@ -278,10 +339,10 @@ int main() {
             case 'e':
                 moveCursor(&cursor, command);
                 break;
-            case 'i':
+            case 'a':
                 pushAfter(cursor, &head, stripWord(input));
                 break;
-            case 'a':
+            case 'i':
                 pushBefore(cursor, &head, stripWord(input));
                 break;
             case 'r':
@@ -300,6 +361,6 @@ int main() {
     }
     printList(head);
     freeList(head);
-    freeList(cursor);
+    free(cursor);
     return 0;
 }
